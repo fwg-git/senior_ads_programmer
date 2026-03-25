@@ -1,0 +1,99 @@
+
+
+> # Programmer : Fanny Gautier
+> # Date       : 25-MAR-2026
+> # Program    : /cloud/project/question_3_tlg/R/01_create_ae_summary_table.R
+> 
+> # Install necessary packages ----
+> install.packages("dplyr")
+Installing package into ‘/cloud/lib/x86_64-pc-linux-gnu-library/4.5’
+(as ‘lib’ is unspecified)
+trying URL 'http://rspm/default/__linux__/noble/latest/src/contrib/dplyr_1.2.0.tar.gz'
+Content type 'application/x-gzip' length 1519472 bytes (1.4 MB)
+==================================================
+downloaded 1.4 MB
+
+* installing *binary* package ‘dplyr’ ...
+* DONE (dplyr)
+
+The downloaded source packages are in
+	‘/tmp/Rtmpix4EaB/downloaded_packages’
+> install.packages("pharmaverseadam")
+Installing package into ‘/cloud/lib/x86_64-pc-linux-gnu-library/4.5’
+(as ‘lib’ is unspecified)
+trying URL 'http://rspm/default/__linux__/noble/latest/src/contrib/pharmaverseadam_1.3.0.tar.gz'
+Content type 'application/x-gzip' length 4565141 bytes (4.4 MB)
+==================================================
+downloaded 4.4 MB
+
+* installing *binary* package ‘pharmaverseadam’ ...
+* DONE (pharmaverseadam)
+
+The downloaded source packages are in
+	‘/tmp/Rtmpix4EaB/downloaded_packages’
+> install.packages("gtsummary")
+Installing package into ‘/cloud/lib/x86_64-pc-linux-gnu-library/4.5’
+(as ‘lib’ is unspecified)
+trying URL 'http://rspm/default/__linux__/noble/latest/src/contrib/gtsummary_2.5.0.tar.gz'
+Content type 'application/x-gzip' length 1777366 bytes (1.7 MB)
+==================================================
+downloaded 1.7 MB
+
+* installing *binary* package ‘gtsummary’ ...
+* DONE (gtsummary)
+
+The downloaded source packages are in
+	‘/tmp/Rtmpix4EaB/downloaded_packages’
+> 
+> # Load the libraries ----
+> library(pharmaverseadam)
+> library(gtsummary)
+> library(dplyr)
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+> 
+> # Load the ADaM data ----
+> # If SAS data use admiral::convert_blanks_to_na() - Not needed here since rda data
+> adae <- pharmaverseadam::adae
+> adsl <- pharmaverseadam::adsl
+> 
+> # Filter Safety Population for ADSL
+> adsl <- adsl %>% 
++   filter(SAFFL == "Y")
+> 
+> # Filter AE data ----
+> adae <- adae %>% 
++   filter(SAFFL == "Y" & TRTEMFL == "Y")
+> 
+> tbl <- tbl_hierarchical(
++   data = adae,
++   variables = c(AESOC, AETERM),
++   by = ACTARM,
++   id = USUBJID,
++   denominator = adsl,
++   overall_row = TRUE,
++   label = "..ard_hierarchical_overall.." ~ "Treatment Emergent AEs"
++   ) %>%
++   # Add Total column, incl. Big N - Total in bold
++   add_overall(
++     last = TRUE,
++     col_label = "**Total**  \nN = {style_number(N)}"
++    ) %>% 
++   # Sort by descending frequency of the Total column
++   sort_hierarchical(
++     sort = "descending",
++     by = last_col()
++   )
+> 
+> # Save output as html
+> tbl %>% 
++   as_gt() %>%
++   gt::gtsave("/cloud/project/question_3_tlg/output/ae_summary_table.html")
